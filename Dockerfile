@@ -27,7 +27,7 @@ RUN ln -s ${NAGIOS_HOME}/bin/nagios /usr/local/bin/nagios && mkdir -p /usr/share
 
 RUN echo "use_timezone=$NAGIOS_TIMEZONE" >> ${NAGIOS_HOME}/etc/nagios.cfg && echo "SetEnv TZ \"${NAGIOS_TIMEZONE}\"" >> /etc/apache2/conf.d/nagios.conf
 
-RUN mkdir -p ${NAGIOS_HOME}/etc/conf.d && mkdir -p ${NAGIOS_HOME}/etc/monitor && ln -s /usr/share/snmp/mibs ${NAGIOS_HOME}/libexec/mibs
+RUN mkdir -p ${NAGIOS_HOME}/etc/conf.d && mkdir -p ${NAGIOS_HOME}/etc/monitor && ln -s /usr/share/snmp/mibs ${NAGIOS_HOME}/libexec/mibs && mkdir -p ${NAGIOS_HOME}/.ssh
 RUN echo "cfg_dir=${NAGIOS_HOME}/etc/conf.d" >> ${NAGIOS_HOME}/etc/nagios.cfg
 RUN echo "cfg_dir=${NAGIOS_HOME}/etc/monitor" >> ${NAGIOS_HOME}/etc/nagios.cfg
 RUN download-mibs && echo "mibs +ALL" > /etc/snmp/snmp.conf
@@ -49,9 +49,7 @@ ENV APACHE_LOG_DIR /var/log/apache2
 
 EXPOSE 80
 
-VOLUME /opt/nagios/var
-VOLUME /opt/nagios/etc
-VOLUME /opt/nagios/libexec
+VOLUME ${NAGIOS_HOME}
 VOLUME /var/log/apache2
 VOLUME /usr/share/snmp/mibs
 
