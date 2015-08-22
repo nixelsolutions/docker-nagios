@@ -11,7 +11,7 @@ ENV APACHE_RUN_GROUP nagios
 ENV NAGIOS_TIMEZONE UTC
 
 RUN sed -i 's/universe/universe multiverse/' /etc/apt/sources.list
-RUN apt-get update && apt-get install -y iputils-ping netcat build-essential snmp snmpd snmp-mibs-downloader php5-cli apache2 libapache2-mod-php5 runit bc postfix bsd-mailx
+RUN apt-get update && apt-get install -y iputils-ping netcat build-essential snmp snmpd snmp-mibs-downloader php5-cli apache2 libapache2-mod-php5 runit bc postfix bsd-mailx python-setuptools
 RUN ( egrep -i  "^${NAGIOS_GROUP}" /etc/group || groupadd $NAGIOS_GROUP ) && ( egrep -i "^${NAGIOS_CMDGROUP}" /etc/group || groupadd $NAGIOS_CMDGROUP )
 RUN ( id -u $NAGIOS_USER || useradd --system $NAGIOS_USER -g $NAGIOS_GROUP -d $NAGIOS_HOME ) && ( id -u $NAGIOS_CMDUSER || useradd --system -d $NAGIOS_HOME -g $NAGIOS_CMDGROUP $NAGIOS_CMDUSER )
 
@@ -41,6 +41,15 @@ ADD nagios.init /etc/sv/nagios/run
 ADD apache.init /etc/sv/apache/run
 ADD postfix.init /etc/sv/postfix/run
 ADD postfix.stop /etc/sv/postfix/finish
+
+# Graphios
+RUN cd /tmp && git clone https://github.com/shawn-sterling/graphios.git && cd graphios && python setup.py install
+RUN perl -p -i -e "s/log_file = .*/log_file = \/opt\/nagios\/var\/graphios.log/g" /etc/graphios/graphios.cfg
+RUN perl -p -i -e "s/spool_directory = .*/spool_directory = \/opt\/nagios\/var\/spool\/graphios/g" /etc/graphios/graphios.cfg
+RUN perl -p -i -e "s/service_perfdata_file=.*/service_perfdata_file=\/opt\/nagios\/var\/spool\/graphios\/service-perfdata/g" /opt/nagios/etc/nagios.cfg
+RUN perl -p -i -e "s/host_perfdata_file=.*/host_perfdata_file=\/opt\/nagios\/var\/spool\/graphios\/host-perfdata/g" /opt/nagios/etc/nagios.cfg
+RUN perl -p -i -e "s/\/var\/spool\/nagios\/graphios\//\/opt\/nagios\/var\/spool\/graphios\//g" /opt/nagios/etc/monitor/graphios_commands.cfg
+RUN mkdir /opt/nagios/var/spool/graphios && chown nagios:nagios /opt/nagios/var/spool/graphios
 
 ADD start.sh /usr/local/bin/start_nagios
 
